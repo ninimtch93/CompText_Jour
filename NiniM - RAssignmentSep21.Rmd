@@ -1,0 +1,114 @@
+---
+title: "NiniM-Assignment"
+output: html_document
+date: "2024-09-21"
+---
+
+```{r}
+
+#install.packages ("tidyverse")
+#install.packages ("rio")
+#install.packages ("janitor")
+
+library (tidyverse)
+library (rio)
+library (janitor)
+
+```
+
+""
+
+```{r}
+
+MyData <- read.csv("data/blackindex_master.csv")
+
+MyData
+```
+
+--Using code, describe the number of rows and columns in the dataset
+
+```{r}
+
+nrow(MyData)
+
+```
+
+```{r}
+
+ncol(MyData)
+
+```
+
+
+
+```{r}
+
+Top5citieswithNA <- MyData %>% 
+  count(newspaper_city) %>% 
+  slice_max(n, n=5)
+
+Top5citieswithNA
+
+```
+
+
+
+```{r}
+Top5citiesWONA <- MyData %>% 
+  count(newspaper_city) %>% 
+  filter(!is.na(newspaper_city)) %>% 
+  slice_max(n, n=5)
+
+Top5citiesWONA
+
+
+```
+
+```{r}
+Allentries <- MyData %>% 
+  count(newspaper_city) %>% 
+  group_by(newspaper_city) %>% 
+  arrange(desc(n))
+
+Allentries
+
+
+```
+
+--Create a table that counts all newspaper_city entries by year. UPDATE: Filter out the NA values
+
+```{r}
+
+Yearsandentries <- MyData %>% 
+  select(year, newspaper_city) %>% 
+  filter(!is.na(newspaper_city)) %>% 
+  count(year, name = "count") %>% 
+  group_by(year)
+  
+Yearsandentries
+  
+  
+```
+
+--Create a simple column ggplot chart that shows the total entries by year
+
+```{r}
+
+Yearsandentries %>% 
+  ggplot(aes(x=year, y=count, fill=year))+
+  geom_col(position = "dodge")+
+  theme(legend.position = "none")+
+labs(title = "Total Newspaper City Entries by Year",
+     subtitle = "Black Index Data", 
+     caption = "Graphics by Nini Mtchedlishvili", 
+     y= "Number of Entries", 
+     x= "Year")
+
+```
+
+This analysis examines the “Blackindex” dataset, which encompasses the frequency of crime-related articles published about Black communities across the United States from 1855 to 2002. The dataset consists of 1,803 rows and 30 columns, highlighting significant discrepancies in publication frequencies among various cities. After filtering, the analysis reveals that Pittsburgh leads with 151 articles, followed closely by Chicago (147), Atlanta (122), Norfolk (96), and New York (71). Notably, information about 1,089 entries about cities was omitted from the dataset, emphasizing a substantial gap in the available data.
+
+In addition, the analysis identifies cities with the fewest published articles: New Orleans (2), Los Angeles (16), Cleveland (40), and Philadelphia (65). Data visualization indicates a notable concentration of controversial stories related to Black communities during the period from 1920 to 1950, with a significant decline in publications until a slight resurgence around 1960.
+
+One significant limitation of the ‘Blackindex’ dataset is the lack of comprehensive city identification in the newspaper column, which complicates analyses. While city identification is feasible through newspaper names, manual corrections would require intensive labor and be time-consuming. Moreover, including additional cities could significantly alter visualizations and analytical insights and provide better data analysis. Therefore, future research should prioritize filling in these gaps.
+
