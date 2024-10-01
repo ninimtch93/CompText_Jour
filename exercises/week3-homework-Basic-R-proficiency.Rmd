@@ -7,19 +7,20 @@ output: html_document
 
 # Homework - Basic R Proficiency
 
-This class exercise is a companion to the following chapter in Computational Text Analysis: [Ch. 11  Loading and Analyzing Data](https://wellsdata.github.io/CompText_Jour/docs/r-load-analyze-visualize.html)
-
+This class exercise is a companion to the following chapter in Computational Text Analysis: [Ch. 11 Loading and Analyzing Data](https://wellsdata.github.io/CompText_Jour/docs/r-load-analyze-visualize.html)
 
 #1: load tidyverse, rio and janitor libraries
+
 ```{r}
+
 
 
 ```
 
-
 #2: Import Data using read.csv:
 
-https://github.com/wellsdata/CompText_Jour/raw/main/data/mob_analysis_data.csv
+<https://github.com/wellsdata/CompText_Jour/raw/main/data/mob_analysis_data.csv>
+
 ```{r}
 
 ```
@@ -47,7 +48,6 @@ https://github.com/wellsdata/CompText_Jour/raw/main/data/mob_analysis_data.csv
 
 ```
 
-
 #7: Create a table counting the number of entries by year and display the top 5 results
 
 ```{r}
@@ -62,10 +62,8 @@ https://github.com/wellsdata/CompText_Jour/raw/main/data/mob_analysis_data.csv
 
 ```
 
-
 #9: Create a simple column ggplot chart that shows the total entries by year
 
 ```{r}
 
 ```
-
