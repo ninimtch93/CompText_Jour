@@ -2,4 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+<<<<<<< HEAD
 .DS_Store
+=======
+.DS_Store
+.DS_Store
+exercises/.DS_Store
+exercises/assets/.DS_Store
+exercises/assets/.DS_Store
+>>>>>>> 922bd381bf4595c2dbd512785934d1ae506fc18a

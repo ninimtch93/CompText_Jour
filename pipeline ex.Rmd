@@ -1,0 +1,116 @@
+---
+title: "Pipeline ex - Nini M."
+output: html_document
+date: "2024-10-19"
+---
+
+```{r}
+#install.packages("tidyverse")
+#install.packages("tidytext")
+#install.packages("textdata")
+#install.packages("quanteda")
+#install.packages("rio")
+#install.packages("ggplot2")
+#install.packages("stringr")
+#install.packages("sentimentr")
+#install.packages("dplyr")
+
+
+library(tidyverse)
+library(tidytext)
+library(textdata)
+library(quanteda)
+library(rio)
+library(ggplot2)
+library(stringr)
+library(sentimentr)
+library(dplyr)
+
+
+```
+
+
+Import Data
+```{r}
+
+mydata <- read.csv("/Users/ninimtchedlishvili/CompText_Jour-main/data/ChinaFDI-LAT_tidy.csv")
+
+
+```
+
+Use code to count the number of unique articles in the dataset
+```{r}
+
+uniquearticle_ct <- mydata %>% 
+  distinct(headline) %>%  
+  count(headline) %>% 
+  group_by(headline)
+
+uniquearticle_ct
+
+```
+
+Remove useless metadata such as "Los Angeles Times" and "ISSN".
+```{r}
+filtered_mydata <- mydata %>% 
+mutate(text = str_squish(text)) %>%  
+  mutate(text = tolower(text)) %>%   
+  mutate(text = str_replace_all(text, "search.proquest.com|los angeles|los angeles times|times|ISSN|issn|;|los angeles, calif\\.", "")) %>% 
+  mutate(text = str_squish(text))
+
+```
+
+```{r}
+
+textonly <- filtered_mydata %>% 
+  select(text)
+
+```
+
+Tokenize the data, remove stop words, remove the phrase "los angeles," and create a dataframe of one word per row
+```{r}
+
+data("stop_words")
+  st_mydata <- stop_words %>% 
+    as.data.frame()
+  
+  st_mydata
+
+
+```
+
+
+```{r}
+tokenized <- textonly %>% 
+  unnest_tokens(word, text)
+
+```
+
+Generate a list of the top 20 bigrams
+```{r}
+
+bigrams <- textonly %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n=2 )
+
+```
+
+```{r}
+top20bigram <- bigrams %>% 
+  count(bigram, sort = TRUE)
+
+top20bigram
+
+```
+
+
+
+```{r}
+  
+
+```
+
+
+
+
+
+
