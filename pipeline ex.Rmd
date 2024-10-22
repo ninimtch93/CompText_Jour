@@ -6,7 +6,6 @@ date: "2024-10-19"
 
 ```{r}
 #install.packages("tidyverse")
-#install.packages("tidytext")
 #install.packages("textdata")
 #install.packages("quanteda")
 #install.packages("rio")
@@ -14,10 +13,10 @@ date: "2024-10-19"
 #install.packages("stringr")
 #install.packages("sentimentr")
 #install.packages("dplyr")
+#install.packages("tidytext")
 
 
 library(tidyverse)
-library(tidytext)
 library(textdata)
 library(quanteda)
 library(rio)
@@ -25,6 +24,7 @@ library(ggplot2)
 library(stringr)
 library(sentimentr)
 library(dplyr)
+library(tidytext)
 
 
 ```
@@ -53,31 +53,23 @@ uniquearticle_ct
 Remove useless metadata such as "Los Angeles Times" and "ISSN".
 ```{r}
 filtered_mydata <- mydata %>% 
-mutate(text = str_squish(text)) %>%  
+  select(text) %>% 
+  mutate(text = str_squish(text)) %>%  
   mutate(text = tolower(text)) %>%   
-  mutate(text = str_replace_all(text, "search.proquest.com|los angeles|los angeles times|times|ISSN|issn|;|los angeles, calif\\.", "")) %>% 
-  mutate(text = str_squish(text))
+  mutate(text = str_replace_all(text, "search.proquest.com|accountis|docview|document|id|url|searchcom|calif|https|title|pages|publication date|subject|language of publication: english|document url|copyright|last updated |database|startofarticle|proquest document|id|classification|https|--|info cali|people|proquest central|publication|info|illustration|caption|[0-9.]|identifier/keyword| twitter|los angeles|los angeles times|times|ISSN|issn|;|los angeles, calif\\.", "")) %>%  
+    unnest_tokens(bigram, text, token = "ngrams", n=2) %>% 
+    separate(bigram, c("word1", "word2"), sep = " ") %>% 
+    filter(!word1 %in% stop_words$word) %>% 
+    filter(!word2 %in% stop_words$word) %>% 
+    count(word1, word2, sort = TRUE) %>% 
+    filter(!is.na(word1))
+
+filtered_mydata
 
 ```
 
-```{r}
-
-textonly <- filtered_mydata %>% 
-  select(text)
-
-```
 
 Tokenize the data, remove stop words, remove the phrase "los angeles," and create a dataframe of one word per row
-```{r}
-
-data("stop_words")
-  st_mydata <- stop_words %>% 
-    as.data.frame()
-  
-  st_mydata
-
-
-```
 
 
 ```{r}
@@ -87,16 +79,15 @@ tokenized <- textonly %>%
 ```
 
 Generate a list of the top 20 bigrams
-```{r}
 
-bigrams <- textonly %>% 
-  unnest_tokens(bigram, text, token = "ngrams", n=2 )
-
-```
 
 ```{r}
-top20bigram <- bigrams %>% 
-  count(bigram, sort = TRUE)
+top20bigram <- filtered_mydata %>% 
+  top_n(20) %>% 
+  mutate(bigram = paste(word1, "  ", word2)) %>% 
+  select(bigram, n)
+
+  
 
 top20bigram
 
@@ -106,11 +97,73 @@ top20bigram
 
 ```{r}
   
+ggplot(top20bigram, aes(x=reorder(bigram, n), y=n, fill=n))+
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  coord_flip() +
+  labs(title = "Two-word phrases abour Chinese investments in the U.S.",
+       caption = "Graphic by Nini Mtchedlishvili. 10/22/2024", 
+       x= "Phrase",
+       y= "Count of terms")
 
 ```
 
 
+Run a sentiment analysis using the Afinn lexicon
+
+```{r}
+afinn <- get_sentiments("afinn")
+
+sentiment <- mydata %>% 
+  select(text, article_nmbr) %>% 
+  mutate(text = str_squish(text)) |> 
+  mutate(text = tolower(text)) |>  
+  mutate(text = str_replace_all(text, "times|accountid|docview|searchproquestcom|proquest|los|angeles|calif|document|id|url|searchcom|title|pages|publication date|publication subject|issn|language of publication: english|document url|copyright|last updated|database|startofarticle|proquest document id|classification|https|--|people|publication info|illustration|caption|[0-9.]|identifier /keyword|twitter\\.", "")) |> 
+  mutate(text = str_replace_all(text, "- ", "")) |> 
+  group_by(article_nmbr) |> 
+  unnest_tokens(tokens, text) |> 
+  filter(!tokens %in% stop_words$word) 
 
 
+```
 
 
+```{r}
+
+sentiment_analysis <- sentiment %>%
+  inner_join(afinn, by = c("tokens"="word")) %>%
+  group_by(article_nmbr) %>%  
+  summarize(sentiment = sum(value), .groups = "drop")
+
+sentiment_analysis
+```
+
+```{r}
+
+sentiment_analysis <- sentiment_analysis %>%
+   group_by(article_nmbr) %>% 
+  mutate(sentiment_type = ifelse(sentiment >= 0, "Positive", "Negative"))
+
+sentiment_analysis
+```
+
+
+```{r}
+ggplot(sentiment_analysis, aes(x = article_nmbr, y = sentiment, fill = sentiment_type)) +
+  geom_col(position = "dodge", stat = "identity") +
+  scale_fill_manual(values = c("Positive" = "blue", "Negative" = "red")) + 
+  labs(title = "Sentiment Analysis Using AFINN Lexicon",
+       caption = "n=36 articles. Graphic by Rob Wells 10-20-2024",
+       x = "Articles",
+       y = "Sentiment Score") 
+
+```
+
+
+The analysis of Chinese investments in the United States highlights several key patterns in the language used across 36 articles, focusing on commonly reoccurring two-word phrases (bigrams). 
+
+Notably, the most frequently used bigrams include "real estate," "national security," "foreign investment," "Chinese companies," and "El Monte" (a city in Los Angeles County, California). These bigrams point to the central themes that dominate the discussion about Chinese investments, such as concerns about the impact on real estate or maybe the particular interest of Chinese companies or businessmen in investing in real estate, implications for national security, and the involvement of Chinese companies in foreign investment deals. The presence of El Monte in the top-five bigram might indicate that local factors or specific regions also play a role in the broader narrative. 
+
+A sentimental analysis of the 36 articles reveals a sharp divide in how these investments are perceived. Out of the 36 articles, 11 have a negative sentiment, and seven of them could be classified as strongly negative. This suggests that there is significant skepticism or criticism surrounding the topic. On the other hand, 24 of the articles show positive sentiment, indicating a generally favorable or neutral view. It should be mentioned that eight of these articles score just about neutral, with sentiment scores below 10 points, reflecting a more cautious or slightly positive outlook on the subject. 
+
+Overall, the data suggests that while there is notable negativity in discussions around Chinese investments, supposedly around sensitive areas like real estate and national security, the majority of articles lean towards a positive interpretation. 
