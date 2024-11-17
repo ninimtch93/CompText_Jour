@@ -289,13 +289,6 @@ My code book will provide clear definitions and examples for each code, ensuring
 
 Sample of Data and Descriptive Statistics
 
-Below you can find the dataframe of the complied articles and the text of each article
-
-```{r}
-
-compiled_text_df
-
-```
 
 Below you can see that the article word-count varies from 391 to 1803. Most of the articles' word-count is in-between 500-900.
 
@@ -358,3 +351,11 @@ ggplot(compiled_text_df, aes(x = date)) +
 ```
 
 By collecting more data in upcoming days, data analysis will show more. 
+
+
+
+
+
+
+
+
