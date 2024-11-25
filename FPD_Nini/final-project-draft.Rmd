@@ -4,9 +4,9 @@ output: html_document
 date: "2024-11-24"
 ---
 
-I updated the project. I am going to make an office hour appointment, so I can figure out why a few codes did not filter stop words below. Also I have questions regarding Donald Trump dataset, I could not decide whether to bring in that in here or to create a new R Markdown document. You can see the Trump excel file in the zip document.
+Professor, I am going to come to your office hour. I have Trump's data ready as well, I just want to know how to include that withing this R Markdown. 
 
---------------
+----------
 
 Currently, I have collected 198 articles from the Daily Wire, a prominent right-wing media organization in the United States. These articles are part of a larger research project aimed at analyzing how this outlet portrays two political figures: Kamala Harris and Donald Trump. The project focuses on articles published a few days before recent elections, as this period is likely to reveal editorial patterns and biases in politically charged reporting. My immediate goal is to expand the dataset to 99 articles about each candidate to ensure thorough comparative analysis. (Selecting 100 articles for Harris would cause the timeline change - that is why I only selected 99 articles from Oct. 14 to Nov. 4, just before the U.S. Presidential Elections.)
 
@@ -463,9 +463,7 @@ ggplot(top_30_bigrams, aes(x = reorder(bigram, n), y = n)) +
 
 Unigram and Word Cloud
 
-Along with the bigrams, I wanted to also present a word cloud. I decided to make an unigram column, but certain words did not get filtered. The codes are running, but the "junk" words are being included in the word cloud. I do not know why.
-
-
+In addition to analyzing bigrams, I decided to include a word cloud. To do this, I created a unigram column. While the code runs successfully, some "junk" words still appear in the word cloud despite attempts to filter them out. Interestingly, in The Daily Wire articles about Kamala Harris, "Trump" emerged as the most frequently mentioned word. For research purposes, I deliberately filtered out "Kamala" and "Harris" from the unigrams, as their frequent mention in articles about her was expected. After removing these terms, the prominence of "Trump" suggests that The Daily Wire strategically framed their coverage around comparisons or references to him.
 ```{r}
 
 
@@ -493,7 +491,7 @@ top_30_unigrams <- kamala_unigrams_df %>%
 
 top_30_unigrams
 ```
-
+ 
 ```{r}
 
 wordcloud2(data = top_30_unigrams, 
