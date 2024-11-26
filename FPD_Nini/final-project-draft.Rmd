@@ -241,8 +241,7 @@ extract_text_from_head_urls <- function(urls_list, n = 29) {
 
 compiled_text_df <- extract_text_from_head_urls(urls_list, n = 100)
 
-# View the compiled results
-print(compiled_text_df)
+
 
 
 ```
