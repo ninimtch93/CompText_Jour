@@ -1,0 +1,1040 @@
+---
+title: "Final_Project_NiniM"
+output: html_document
+date: "2024-12-01"
+---
+
+In the following project, I have collected 198 articles from the Daily Wire, a prominent right-wing media organization in the United States. These articles are part of a larger research project aimed at analyzing how this outlet portrays two political figures: Kamala Harris and Donald Trump. The project focuses on articles published a few days before recent elections, as this period is likely to reveal editorial patterns and biases in politically charged reporting. My immediate goal is to expand the dataset to 99 articles about each candidate to ensure thorough comparative analysis. (Selecting 100 articles for Harris would cause the timeline change - that is why I only selected 99 articles from Oct. 14 to Nov. 4, just before the U.S. Presidential Elections.)
+
+The core of this research lies in examining the language and sentiment employed by the Daily Wire when referring to Kamala Harris versus Donald Trump. I aim to identify patterns in tone, word choice, and framing. Sentiment analysis will help determine whether the portrayal of Harris skews more negative or positive compared to Trump, while textual comparisons will highlight recurring themes and rhetorical strategies.
+
+Ultimately, this project seeks to analyze the frequency of biases in the Daily Wire's reporting towards both Kamala Harris and Donald Trump. If disparities in sentiment and language are evident, it could provide valuable insights into the media outlet's approach to covering candidates of opposing political affiliations. By shedding light on these patterns, the study will contribute to broader conversations about media bias and its influence on public opinion during critical electoral periods. 
+
+The decision to gather articles from the period between October 14 and November 4 reflects a critical phase in the lead-up to the U.S. presidential election. This timeframe includes the final weeks of the campaign, a period when media coverage intensifies, candidates make last-minute appeals to voters, and public discourse often reaches its peak. By focusing on this window, the analysis aims to capture the most concentrated and potentially impactful reporting, narratives, and biases leading up to one of the most consequential events in U.S. politics. This approach ensures the data reflects the media's framing and emphasis during the election's pivotal closing days.
+
+The link to the Daily Wire Kamala Harris dataset: https://github.com/ninimtch93/CompText_Jour/blob/main/FPD_Nini/DW_Kamala_Articles.xlsx
+
+The link to the Daily Wire Kamala Harris dataset:
+https://github.com/ninimtch93/CompText_Jour/blob/main/FPD_Nini/DW_Trump_Articles.xlsx
+
+
+
+```{r}
+
+# install.packages("tidyverse")
+# install.packages("rvest")
+# install.packages("janitor")
+# install.packages("wordcloud2")
+
+
+library(tidyverse)
+library(rvest)
+library(janitor)
+library(readxl)
+library(ggplot2)
+library(tidytext)
+library(wordcloud2)
+library(quanteda)
+library(rio)
+library(textdata)
+
+
+```
+
+Content Analysis Plan
+
+Collecting and Preparing the Data
+
+The first step is to complete the collection of articles about Kamala Harris and Donald Trump from the Daily Wire. Currently, I have 29 articles and aim to gather 100 articles for each candidate. Once the dataset is complete, I will clean and organize the text files saved in the extracted_text folder to ensure they are ready for analysis.
+
+
+
+Building and Using My Code Book
+
+Throughout our classes, I have managed to start collecting all of the codes that we went through. Because my project is going to be a comparative analysis of how a right-wing media organization portraied a Republican and a Democrat presidential candidates, using the codes in a right order will hold a crucial role in my research. 
+
+After gathering all of the data, I will analyze the bigrams to compare what two-word phrases were mostly used while talking about Donald Trump and Kamala Harris.
+
+For sentiment analysis, the codes will categorize text into:
+Positive: words like "success," "strong," or "leader."
+Negative: words like "failure," "weak," or "untrustworthy."
+Neutral or mixed: words like "controversial," "debate," or "discussion."
+
+I plan to apply consistent rules for identifying patterns in the articles and assign sentiment scores to compare how each candidate is portrayed.
+
+
+
+Analyzing the Data
+The analysis will include Text Analysis that will help me in identifying the most frequently used bigrams for each candidate and comparing the themes, and Sentiment Analysis that will allow me to measure the tone (positive, negative, or neutral) toward Kamala Harris and Donald Trump using sentiment lexicons.
+
+
+
+Visualization with ggplot2
+
+I plan to present at least to data visualization charts: Bigrams Bar Plot that will show the frequency of top 20 bigrams for each candidate, and
+Sentiment Comparison Plot that will visualize the compared sentiment distributions side-by-side for Harris and Trump.
+
+I might also do a Word Cloud: Summarizing frequently used words or phrases visually.
+
+
+
+How My Code Book Will Support the Project
+
+Standardizing Research:
+My code book will ensure consistency and transparency in coding the data. By defining clear rules for bigrams and sentiment categories, I will apply the same approach to all articles on both sides. This prevents subjective interpretations and makes it easier to compare language and tone across articles about Kamala Harris and Donald Trump.
+
+Organizing Data:
+With a large dataset of up to 200 articles, my code book will save time by providing a structured guide for categorizing and analyzing text. Having clear codes for key themes and sentiment ensures the focus remains on relevant patterns, leading to richer and more meaningful results.
+
+Quality Control:
+My code book will provide clear definitions and examples for each code, ensuring that data is entered and analyzed consistently. This systematic approach will reduce errors and strengthen the reliability of the findings. This will make it easier to draw valid conclusions about potential biases in the Daily Wire’s reporting.
+
+
+
+First, I will begin with analyzing below you can find a compiled csv file regarding the Daily Wire articles about Kamala Harris. In this csv file you can find columns named URL, Headline, Article Text, Date (characters), Date1 - modified date column for further analysis. 
+
+```{r}
+
+harris_dw <- read_csv("harris_dw.csv")
+
+harris_dw
+
+```
+
+Below you can see that the article word-count varies from 391 to 2655. Most of the articles' word-count is in-between 500-900.
+
+
+```{r}
+
+WC_KH <- harris_dw %>%
+  select(article_text) %>% 
+  mutate(WordCount = str_count(article_text, "\\w+")) %>% 
+  arrange(desc(WordCount))
+  
+
+WC_KH
+
+```
+
+
+Statistics about Minimum, Maximum, Average, and Median number of words in these articles. 
+
+Minimum wordcount is 339; 
+Maximum wordcount is 2655; 
+Average wordcount is 715.7; 
+And Median wordcount is 571. 
+```{r}
+
+
+summary_stats_kh <- data.frame(
+  Min = min(WC_KH$WordCount, na.rm = TRUE),
+  Max = max(WC_KH$WordCount, na.rm = TRUE),
+  Mean = mean(WC_KH$WordCount, na.rm = TRUE),
+  Median = median(WC_KH$WordCount, na.rm = TRUE)
+)
+
+summary_stats_kh
+```
+
+Visual graph of the word count in Daily Wire articles about Kamala Harris.
+```{r}
+
+ggplot(WC_KH, aes(x = WordCount)) +
+  geom_histogram(binwidth = 50, fill = "blue", color = "black") +
+  labs(
+    title = "Distribution of Word Counts in Articles about Kamala Harris",
+    x = "Word Count",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+
+```
+
+
+Code for counting rows
+
+```{r}
+
+nrow(harris_dw)
+
+```
+
+Code for counting columns
+
+```{r}
+
+ncol(harris_dw)
+
+```
+
+Vizualization of article-distiribution about Kamala Harris in the period of Oct. 14 to Nov. 4.
+
+```{r}
+
+ggplot(harris_dw, aes(x = date1)) +
+  geom_bar(binwidth = 7, fill = "blue", color = "black") + 
+  labs(
+    title = "Distribution of Articles about Kamala Harris from Oct. 14 to Nov. 4",
+    caption = "Graphics by Nini Mtchedlishvili",
+    x = "Date",
+    y = "Number of Articles"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+
+The analysis below show bigrams/two-word phrases used in the articles
+```{r}
+
+kamala_bigrams_df <- harris_dw %>%
+  unnest_tokens(bigram, article_text, token = "ngrams", n = 2) %>%  
+  separate(bigram, into = c("word1", "word2"), sep = " ") %>%  
+  filter(
+    !word1 %in% stop_words$word,  
+    !word2 %in% stop_words$word,  
+    !word1 %in% c("it's", "i'm", "that’s", "they're", "don't", "2024", 
+                  "date", "latestnews", "latest", "news", "tip", "submit", 
+                  "missing", "its", "it", "is", "article", "text", "story", "submit", "date", "oct", "daily", "wire", "oct", "28", "dailywire", "https", "t.co","14", "2024", "headline"), 
+    !word2 %in% c("it's", "i'm", "that’s", "they're", "don't", "2024", 
+                  "date", "latestnews", "latest", "news", "tip", "submit", 
+                  "missing", "its", "it", "is", "article", "text", "story", "submit", "date", "oct", "daily", "wire", "oct", "28", "dailywire", "https", "t.co","14", "2024", "headline"), , 
+    !is.na(word1), 
+    !is.na(word2)  
+  ) %>%
+  unite(bigram, word1, word2, sep = " ") %>%  
+  count(bigram, sort = TRUE)  
+
+kamala_bigrams_df
+
+```
+
+
+Vizualization of Top 30 Bigrams
+
+```{r}
+
+kamala_top_30_bigrams <- kamala_bigrams_df %>%
+  head(30) 
+
+kamala_top_30_bigrams
+
+
+```
+
+
+```{r}
+
+ggplot(kamala_top_30_bigrams, aes(x = reorder(bigram, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(
+    title = "Top 30 Two-Word Phrases in the Articles about Kamala Articles",
+    subtitle = "The Daily Wire Articles from Oct. 14 to Nov. 5",
+    caption = "Graphics by Nini Mtchedlishvili",
+    x = "Bigrams",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip() 
+
+
+```
+
+
+
+Unigram and Word Cloud
+
+In addition to analyzing bigrams, I decided to include a word cloud. To do this, I created a unigram column. While the code runs successfully, some "junk" words still appear in the word cloud despite attempts to filter them out. Interestingly, in The Daily Wire articles about Kamala Harris, "Trump" emerged as the most frequently mentioned word. For research purposes, I deliberately filtered out "Kamala" and "Harris" from the unigrams, as their frequent mention in articles about her was expected. After removing these terms, the prominence of "Trump" suggests that The Daily Wire strategically framed their coverage around comparisons or references to him.
+
+
+```{r}
+
+kamala_unigrams_df <- harris_dw %>%
+  unnest_tokens(word, article_text) %>%  
+  mutate(word=str_squish(word)) %>% 
+  mutate(word = gsub("[[:punct:]]", "", word)) %>% 
+  filter(
+    !word %in% stop_words$word,  
+    !word %in% c("its","\\b[Ii][tT]’?s\\b", "i'm", "that’s", "they're", "don't", "2024", 
+                 "date", "latestnews", "latest", "news", "tip", "submit", 
+                 "missing", "its", "it", "is", "pic.twitter.com", "headline", "podcasts", "account", "shes", "'", "s", "oct", "text", "october", "story", "interview","article", "pictwittercom", ""),  
+    !is.na(word) 
+  ) %>%  
+  count(word, sort = TRUE)
+
+kamala_unigrams_df
+
+```
+
+
+```{r}
+
+kamala_top_30_unigrams <- kamala_unigrams_df %>%
+  arrange(desc(n)) %>%  
+  head(30) 
+
+
+kamala_top_30_unigrams
+
+```
+
+
+```{r}
+
+wordcloud2(data = kamala_top_30_unigrams, 
+           size = 1,  
+           shape = 'circle',  
+           color = 'random-dark', 
+           backgroundColor = "white")  
+
+
+```
+
+
+
+Sentiments analysis of the articles about Kamala Harris.
+
+```{r}
+
+kh_text_tokenized1 <- harris_dw %>% 
+  select(article_text) %>% 
+  unnest_tokens(word, article_text) 
+
+kh_text_tokenized1
+
+```
+
+Filtered the tokenized dataframe from stopwords.
+```{r}
+
+kh_text_tokenized <- harris_dw %>% 
+  select(article_text) %>% 
+  mutate(article_text = str_replace_all(article_text, "- ", "")) %>% 
+  unnest_tokens(word, article_text) %>% 
+  filter(!word %in% stop_words$word) %>% 
+  filter(word != "") %>%
+  filter(!grepl('[0-9]', word)) %>% 
+  filter(word != "missing")
+
+kh_text_tokenized
+
+```
+
+
+```{r}
+
+kh_text_word_ct <- kh_text_tokenized %>%
+  count(word, sort=TRUE)
+
+kh_text_word_ct
+
+```
+
+```{r}
+
+kh_nrc_sentiments <- get_sentiments("nrc")
+kh_afinn_sentiments <- get_sentiments("afinn")
+
+kh_nrc_sentiments %>% count(sentiment)
+
+kh_nrc_sentiments %>% 
+  group_by(word) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  distinct()
+
+```
+
+
+```{r}
+
+kh_sentiments_all <- kh_text_tokenized %>%
+  inner_join(kh_nrc_sentiments) 
+
+
+kh_sentiments_all %>% 
+  group_by(word) %>% 
+    count(sentiment) %>% 
+  arrange(desc(n))
+
+
+```
+
+```{r}
+
+kh_sentiments_all <- kh_text_tokenized %>%
+  inner_join(kh_nrc_sentiments) %>%
+  count(sentiment, sort = TRUE) %>% 
+  mutate(pct_total =round(n/sum(n), digits=2))
+
+kh_sentiments_all
+
+```
+
+
+```{r}
+
+kh_afinn_plot <- kh_sentiments_all %>% 
+  ggplot(aes(x = sentiment, y = n,fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none") +
+  labs(title = "Total Sentiment in the Daily Wire articles about Kamala Harris",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Sentiments")
+
+kh_afinn_plot + scico::scale_fill_scico(palette = "vik")
+
+kh_afinn_plot
+
+```
+
+
+```{r}
+
+kh_nrc_anger <- kh_nrc_sentiments %>%
+  filter(sentiment == "anger")
+
+kh_anger <- kh_text_tokenized %>%
+  inner_join(kh_nrc_anger) %>%
+  count(word, sort = TRUE)
+
+kh_anger
+
+```
+
+```{r}
+
+kh_t30_anger <- kh_anger %>% 
+  head(30)
+
+kh_t30_anger
+
+```
+
+
+
+```{r}
+
+kh_anger_plot <- kh_t30_anger %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Anger Sentiment in the Daily Wire articles about Kamala Harris",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Anger Words")
+
+kh_anger_plot
+
+```
+
+
+
+```{r}
+
+kh_nrc_anticipation <- kh_nrc_sentiments %>%
+  filter(sentiment == "anticipation")
+
+kh_anticipation <- kh_text_tokenized%>%
+  inner_join(kh_nrc_anticipation) %>%
+  count(word, sort = TRUE)
+
+kh_anticipation
+
+```
+
+```{r}
+
+kh_t30_anticipation <- kh_anticipation %>% 
+  head(30)
+
+kh_t30_anticipation
+
+```
+
+
+
+```{r}
+
+kh_anticipation_plot <- kh_t30_anticipation %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Anticipation Sentiment in the Daily Wire articles about Kamala Harris",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Anticipation Words")
+
+kh_anticipation_plot
+
+```
+
+
+
+```{r}
+
+kh_nrc_fear <- kh_nrc_sentiments %>%
+  filter(sentiment == "fear")
+
+kh_fear <- kh_text_tokenized%>%
+  inner_join(kh_nrc_fear) %>%
+  count(word, sort = TRUE)
+
+kh_fear
+
+
+```
+
+
+```{r}
+
+kh_t30_fear <- kh_fear %>% 
+  head(30)
+
+kh_t30_fear
+
+```
+
+
+```{r}
+
+kh_fear_plot <- kh_t30_fear %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Fear Sentiment in the Daily Wire articles about Kamala Harris",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Fear Words")
+
+kh_fear_plot
+
+```
+
+
+```{r}
+
+kh_nrc_disgust <- kh_nrc_sentiments %>%
+  filter(sentiment == "disgust")
+
+kh_disgust <- kh_text_tokenized%>%
+  inner_join(kh_nrc_disgust) %>%
+  count(word, sort = TRUE)
+
+kh_disgust
+
+
+```
+
+
+```{r}
+
+kh_t30_disgust <- kh_disgust %>% 
+  head(30)
+
+kh_t30_disgust
+
+```
+
+
+```{r}
+
+kh_disgust_plot <- kh_t30_disgust %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Digust Sentiment in the Daily Wire articles about Kamala Harris",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Disgust Words")
+
+kh_disgust_plot
+
+```
+
+
+Below, you can find analysis regarding the Daily Wire articles about Donald Trump.
+
+```{r}
+
+trump_dw <- read_csv("trump_dw.csv")
+
+trump_dw
+
+```
+
+
+```{r}
+
+WC_DT <- trump_dw %>%
+  select(article_text) %>% 
+  mutate(WordCount = str_count(article_text, "\\w+")) %>% 
+  arrange(desc(WordCount))
+  
+
+WC_DT
+
+
+```
+
+
+```{r}
+
+summary_stats_kh <- data.frame(
+  Min = min(WC_DT$WordCount, na.rm = TRUE),
+  Max = max(WC_DT$WordCount, na.rm = TRUE),
+  Mean = mean(WC_DT$WordCount, na.rm = TRUE),
+  Median = median(WC_DT$WordCount, na.rm = TRUE)
+)
+
+summary_stats_kh
+
+```
+
+```{r}
+
+ggplot(WC_DT, aes(x = WordCount)) +
+  geom_histogram(binwidth = 50, fill = "blue", color = "black") +
+  labs(
+    title = "Distribution of Word Counts in Articles about Donald Trump",
+    x = "Word Count",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+nrow(trump_dw)
+
+```
+
+
+```{r}
+
+ncol(trump_dw)
+
+```
+
+
+Vizualization of article-distiribution about Kamala Harris in the period of Oct. 14 to Nov. 4. It should be mentioned that while selecting articles about Donald Trump, on Nov. 3 there was nothing published about him, but there were articles about the Republican Party. As for the article published on Nov. 5, the story is from Nov. 4 and it was my decision to include it in the the data I compiled. 
+```{r}
+
+ggplot(trump_dw, aes(x = date1)) +
+  geom_bar(binwidth = 7, fill = "blue", color = "black") + 
+  labs(
+    title = "Distribution of Articles about Donald Trump from Oct. 14 to Nov. 4",
+    caption = "Graphics by Nini Mtchedlishvili",
+    x = "Date",
+    y = "Number of Articles"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+The analysis below show bigrams/two-word phrases used in the articles regarding Donald Trump.
+
+```{r}
+
+trump_bigrams_df <- trump_dw %>%
+  unnest_tokens(bigram, article_text, token = "ngrams", n = 2) %>%  
+  separate(bigram, into = c("word1", "word2"), sep = " ") %>%  
+  filter(
+    !word1 %in% stop_words$word,  
+    !word2 %in% stop_words$word,  
+    !word1 %in% c("it's", "i'm", "that’s", "they're", "don't", "2024", 
+                  "date", "latestnews", "latest", "news", "tip", "submit", 
+                  "missing", "its", "it", "is", "article", "text", "story", "submit", "date", "oct", "daily", "wire", "oct", "28", "dailywire", "https", "t.co","14", "2024", "headline"), 
+    !word2 %in% c("it's", "i'm", "that’s", "they're", "don't", "2024", 
+                  "date", "latestnews", "latest", "news", "tip", "submit", 
+                  "missing", "its", "it", "is", "article", "text", "story", "submit", "date", "oct", "daily", "wire", "oct", "28", "dailywire", "https", "t.co","14", "2024", "headline"), , 
+    !is.na(word1), 
+    !is.na(word2)  
+  ) %>%
+  unite(bigram, word1, word2, sep = " ") %>%  
+  count(bigram, sort = TRUE)  
+
+trump_bigrams_df
+
+
+```
+
+
+```{r}
+
+trump_top_30_bigrams <- trump_bigrams_df %>%
+  head(30) 
+
+trump_top_30_bigrams
+
+
+```
+
+
+```{r}
+
+ggplot(trump_top_30_bigrams, aes(x = reorder(bigram, n), y = n)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(
+    title = "Top 30 Two-Word Phrases in the Articles about Kamala Articles",
+    subtitle = "The Daily Wire Articles from Oct. 14 to Nov. 5",
+    caption = "Graphics by Nini Mtchedlishvili",
+    x = "Bigrams",
+    y = "Frequency"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip() 
+
+```
+
+
+```{r}
+
+trump_unigrams_df <- trump_dw %>%
+  unnest_tokens(word, article_text) %>%  
+  mutate(word=str_squish(word)) %>% 
+  mutate(word = gsub("[[:punct:]]", "", word)) %>% 
+  filter(
+    !word %in% stop_words$word,  
+    !word %in% c("its","\\b[Ii][tT]’?s\\b", "i'm", "that’s", "they're", "don't", "2024", 
+                 "date", "latestnews", "latest", "news", "tip", "submit", 
+                 "missing", "its", "it", "is", "pic.twitter.com", "headline", "podcasts", "account", "shes", "'", "s", "oct", "text", "october", "story", "interview","article","dont", "pictwittercom", "theyre", "hes", "told", "stay", "time", "day", "piece", ""),  
+    !is.na(word) 
+  ) %>%  
+  count(word, sort = TRUE)
+
+trump_unigrams_df
+
+
+```
+
+
+```{r}
+
+trump_top_30_unigrams <- trump_unigrams_df %>%
+  arrange(desc(n)) %>%  
+  head(30) 
+
+
+trump_top_30_unigrams
+
+```
+
+
+```{r}
+
+wordcloud2(data = trump_top_30_unigrams, 
+           size = 1,  
+           shape = 'circle',  
+           color = 'random-dark', 
+           backgroundColor = "white")  
+
+```
+
+
+```{r}
+
+dt_text_tokenized1 <- trump_dw %>% 
+  select(article_text) %>% 
+  unnest_tokens(word, article_text) 
+
+dt_text_tokenized1
+
+```
+
+Filtered the tokenized dataframe from stopwords.
+```{r}
+
+dt_text_tokenized <- trump_dw %>% 
+  select(article_text) %>% 
+  mutate(article_text = str_replace_all(article_text, "- ", "")) %>% 
+  unnest_tokens(word, article_text) %>% 
+  filter(!word %in% stop_words$word) %>% 
+  filter(word != "") %>%
+  filter(!grepl('[0-9]', word)) %>% 
+  filter(word != "missing")
+
+dt_text_tokenized
+
+```
+
+
+```{r}
+
+dt_text_word_ct <- dt_text_tokenized %>%
+  count(word, sort=TRUE)
+
+dt_text_word_ct
+
+```
+
+```{r}
+
+dt_nrc_sentiments <- get_sentiments("nrc")
+dt_afinn_sentiments <- get_sentiments("afinn")
+
+dt_nrc_sentiments %>% count(sentiment)
+
+dt_nrc_sentiments %>% 
+  group_by(word) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  distinct()
+
+```
+
+
+```{r}
+
+dt_sentiments_all <- dt_text_tokenized %>%
+  inner_join(dt_nrc_sentiments) 
+
+
+dt_sentiments_all %>% 
+  group_by(word) %>% 
+    count(sentiment) %>% 
+  arrange(desc(n))
+
+
+```
+
+```{r}
+
+dt_sentiments_all <- dt_text_tokenized %>%
+  inner_join(dt_nrc_sentiments) %>%
+  count(sentiment, sort = TRUE) %>% 
+  mutate(pct_total =round(n/sum(n), digits=2))
+
+dt_sentiments_all
+
+```
+
+
+```{r}
+
+dt_afinn_plot <- dt_sentiments_all %>% 
+  ggplot(aes(x = sentiment, y = n,fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none") +
+  labs(title = "Total Sentiment in the Daily Wire articles about Donald Trump",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Sentiments")
+
+dt_afinn_plot + scico::scale_fill_scico(palette = "vik")
+
+dt_afinn_plot
+
+```
+
+
+```{r}
+
+dt_nrc_anger <- dt_nrc_sentiments %>%
+  filter(sentiment == "anger")
+
+dt_anger <- dt_text_tokenized %>%
+  inner_join(dt_nrc_anger) %>%
+  count(word, sort = TRUE)
+
+dt_anger
+
+```
+
+```{r}
+
+dt_t30_anger <- dt_anger %>% 
+  head(30)
+
+dt_t30_anger
+
+```
+
+
+
+```{r}
+
+dt_anger_plot <- dt_t30_anger %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Anger Sentiment in the Daily Wire articles about Donald Trump",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Anger Words")
+
+dt_anger_plot
+
+```
+
+
+
+```{r}
+
+dt_nrc_anticipation <- dt_nrc_sentiments %>%
+  filter(sentiment == "anticipation")
+
+dt_anticipation <- dt_text_tokenized%>%
+  inner_join(dt_nrc_anticipation) %>%
+  count(word, sort = TRUE)
+
+dt_anticipation
+
+```
+
+```{r}
+
+dt_t30_anticipation <- dt_anticipation %>% 
+  head(30)
+
+dt_t30_anticipation
+
+```
+
+
+
+```{r}
+
+dt_anticipation_plot <- dt_t30_anticipation %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Anticipation Sentiment in the Daily Wire articles about Donald Trump",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Anticipation Words")
+
+dt_anticipation_plot
+
+```
+
+
+
+```{r}
+
+dt_nrc_fear <- dt_nrc_sentiments %>%
+  filter(sentiment == "fear")
+
+dt_fear <- dt_text_tokenized%>%
+  inner_join(dt_nrc_fear) %>%
+  count(word, sort = TRUE)
+
+dt_fear
+
+
+```
+
+
+```{r}
+
+dt_t30_fear <- dt_fear %>% 
+  head(30)
+
+dt_t30_fear
+
+```
+
+
+```{r}
+
+dt_fear_plot <- dt_t30_fear %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Fear Sentiment in the Daily Wire articles about Donald Trump",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Fear Words")
+
+dt_fear_plot
+
+```
+
+
+```{r}
+
+dt_nrc_disgust <- dt_nrc_sentiments %>%
+  filter(sentiment == "disgust")
+
+dt_disgust <- dt_text_tokenized%>%
+  inner_join(kh_nrc_disgust) %>%
+  count(word, sort = TRUE)
+
+dt_disgust
+
+
+```
+
+
+```{r}
+
+dt_t30_disgust <- dt_disgust %>% 
+  head(30)
+
+dt_t30_disgust
+
+```
+
+
+```{r}
+
+dt_disgust_plot <- dt_t30_disgust %>% 
+  ggplot(aes(x = word, y = n, fill = n)) +
+  geom_col(position = "dodge") + 
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Total Digust Sentiment in the Daily Wire articles about Donald Trump",
+       subtitle = " ",
+       caption = "Data gathered by Nini Mtchedlishvili. Graphic by Nini Mtchedlishvili",
+       y="Score",
+       x="Disgust Words")
+
+kh_disgust_plot
+
+```
+Conclusion
+
+Data preparation process included:cleaning the text by removing punctuation, stopwords, numbers, and irrelevant or repetitive words; tokenizing the text into unigrams and bigrams to study individual words and two-word phrases; creating a word count column to understand the length of each article.
+
+Analytical Approach
+The analysis focused on two main aspects: textual patterns and sentiment analysis.
+
+Textual Patterns:
+I identified the most frequent words and bigrams used in articles about each candidate. A word cloud was also created to provide a visual summary of the prominent terms. The analysis highlighted key themes, including frequent references to Donald Trump within articles about Kamala Harris, suggesting comparative framing.
+
+Sentiment Analysis:
+Using established sentiment lexicons (e.g., NRC and AFINN), I categorized the text into sentiments such as "positive," "negative," "anger," "anticipation," "fear," and "disgust." Sentiment distributions were compared between Harris and Trump to observe differences in tone and emotions.
+
+Visualization
+To illustrate the findings, I used ggplot2 to create several visualizations: distribution histograms of word counts for articles about each candidate; bar plots of the top 30 bigrams to highlight commonly used phrases; sentiment bar charts for both candidates, showcasing the overall tone and specific emotional sentiments.
+
+
+The combined eight sentiment analysis charts show a clear difference in how The Daily Wire portrays Kamala Harris and Donald Trump. For Kamala Harris, negative emotions like fear, anger, and disgust are the most common sentiments. Words like "illegal," "war," and "murder" show up often in the fear-related coverage, while terms like "crime," "blame," and "attack" stand out in the anger category. The disgust chart notebaly features words like "abortion" and "illegal," which suggests that the articles about Harris lean heavily on controversial or divisive topics. Overall, the sentiment toward Harris is strongly negative, which points to an effort to highlight criticism and amplify doubt about her.
+
+On the other hand, the articles about Donald Trump show a mix of emotions. While there’s still a good amount of fear and anger, with words like "illegal," "violence," and "lawsuit" standing out, there’s also a noticeable amount of anticipation. Words like "victory," "vote," and "winning" are common, which gives his coverage a more hopeful or strategic tone in certain areas. This mix of emotions creates a more layered picture of Trump—he’s criticized, but there’s also a focus on potential success and future outcomes. The anticipation angle is a key difference compared to Harris, whose coverage doesn’t include much positivity.
+
+Looking at both, it’s clear that Harris gets the short end of the stick when it comes to emotional framing. Her coverage is overwhelmingly negative, while Trump’s includes moments of optimism alongside the criticism. This difference lines up with The Daily Wire’s political leanings, where Harris, as a Democrat, is portrayed in a harsher light, and Trump, as a Republican, is shown with more nuance and occasional positivity. It’s a good example of how media outlets can use emotion to shape public perception, especially during politically sensitive times.
