@@ -1,5 +1,5 @@
 ---
-title: "Final_Project_NiniM"
+title: "The Daily Wire Coverage of Kamala Harris and Donald Trump"
 output: html_document
 date: "2024-12-01"
 ---
