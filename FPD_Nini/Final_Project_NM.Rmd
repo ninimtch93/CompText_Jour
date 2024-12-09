@@ -60,8 +60,11 @@ The link to the Daily Wire Kamala Harris dataset:
 # install.packages("rvest")
 # install.packages("janitor")
 # install.packages("wordcloud2")
+#install.packages("tm")
 
 
+library(topicmodels)
+library(tm)
 library(tidyverse)
 library(rvest)
 library(janitor)
@@ -1182,6 +1185,202 @@ dt_disgust_plot <- dt_t30_disgust %>%
        x="Disgust Words")
 
 kh_disgust_plot
+
+```
+
+# Topic Models
+
+Based on the topic modeling charts for Donald Trump and Kamala Harris,
+the **six most common topics across both analyses are Climate Change,
+Economic Issues, Education, Healthcare, Immigration, and National
+Security.** These categories reflect key themes often associated with
+political discussions in media. For Trump, terms such as “Trump,”
+“Harris,” “president,” and “campaign” dominate across multiple topics,
+suggesting a narrative heavily focused on comparisons and political
+rivalry, particularly with Harris. In the case of Harris, while her name
+is central, terms like “Trump,” “election,” and “Biden” highlight a
+similar framing within a political context but emphasize
+campaign-specific language.
+
+A striking observation is how certain topics like Economic Issues and
+National Security are strongly tied to prominent political figures like
+Trump, indicating the media's focus on his policies and controversies.
+For Kamala Harris, Climate Change and Education are particularly
+associated with her name, signaling efforts to portray her within
+progressive policy contexts. However, the overlap of terms such as
+"Trump" in Harris's chart and "Harris" in Trump’s suggests a deliberate
+strategy to frame their narratives in opposition or comparison, likely
+appealing to their respective audiences.
+
+The representation of Immigration and Healthcare in both charts
+underlines their importance in media discussions about both figures. For
+Trump, immigration appears prominently in connection with terms like
+“voters” and “Democrats,” possibly tied to political divisiveness on
+this issue. For Harris, terms like “Biden” and “vice” under immigration
+likely emphasize her role within the broader Democratic stance. The
+visualizations overall indicate that while both figures are discussed
+across the same broad categories, the framing and context of these
+topics are tailored to highlight specific aspects of their political
+personas.
+
+```{r include=FALSE}
+
+# Create a unique article ID column
+harris_dw <- harris_dw %>%
+  mutate(article_id = row_number())
+
+kh_custom_stop_words <- tibble(word = c("don't", "we're", "it's", "isn't", "didn't", "won't", "wasn't", 
+                                     "can't", "hasn't", "haven't", "shouldn't", "couldn't", "wouldn't", 
+                                     "you'll", "he's", "she's", "they're", "we've", "you've", "i've", "trump's", "2024"))
+
+# Text preprocessing: Tokenizing and removing stop words
+kh_text_tokens <- harris_dw %>%
+  unnest_tokens(word, article_text) %>%
+  anti_join(stop_words) %>%
+  anti_join(kh_custom_stop_words) %>% 
+  count(article_id, word, sort = TRUE) %>%
+  filter(n > 1) 
+
+
+# Create a Document-Term Matrix
+kh_dtm <- kh_text_tokens %>%
+  count(article_id, word) %>% 
+  cast_dtm(article_id, word, n)
+
+# Fit an LDA model with 6 topics
+kh_lda_model <- LDA(kh_dtm, k = 6, control = list(seed = 1234))
+
+# Extract and display the top terms for each topic
+kh_topics <- tidy(kh_lda_model, matrix = "beta")
+
+kh_top_terms <- kh_topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 6) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+kh_top_terms <- kh_top_terms %>%
+  mutate(
+    topic = case_when(
+      topic == 1 ~ "Economic Issues",
+      topic == 2 ~ "Immigration",
+      topic == 3 ~ "Healthcare",
+      topic == 4 ~ "National Security",
+      topic == 5 ~ "Climate Change",
+      topic == 6 ~ "Education"
+    )
+  )
+
+```
+
+```{r}
+
+
+# Visualize the top terms for each topic
+kh_top_terms %>% 
+ggplot(aes(x = reorder(term, beta), y = beta, fill = topic)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(
+    values = c("purple", "cyan", "red", "yellow", "blue", "green"),
+    name = "Topic"
+  ) +
+  labs(
+    title = "Common Narratives in Articles about Kamala Harris",
+    subtitle = "Six probable topics. n=9,590",
+    y = "Beta",
+    x = "Terms",
+    caption = "by Nini Mtchedlishvili"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "right",
+    axis.text.y = element_text(color = "black", size = 10),
+    axis.title.y = element_text(size = 12)
+  )
+
+```
+
+```{r include=FALSE}
+
+# Create a unique article ID column
+trump_dw <- trump_dw %>%
+  mutate(article_id = row_number())
+
+custom_stop_words <- tibble(word = c("don't", "we're", "it's", "isn't", "didn't", "won't", "wasn't", 
+                                     "can't", "hasn't", "haven't", "shouldn't", "couldn't", "wouldn't", 
+                                     "you'll", "he's", "she's", "they're", "we've", "you've", "i've", "trump's", "2024"))
+
+
+# Text preprocessing: Tokenizing and removing stop words
+dt_text_tokens <- trump_dw %>%
+  unnest_tokens(word, article_text) %>%
+  anti_join(custom_stop_words) %>% 
+  anti_join(stop_words) %>%
+  count(article_id, word, sort = TRUE) %>%
+  filter(n > 1) 
+
+
+# Create a Document-Term Matrix
+dt_dtm <- dt_text_tokens %>%
+  count(article_id, word) %>% 
+  cast_dtm(article_id, word, n)
+
+# Fit an LDA model with 6 topics
+dt_lda_model <- LDA(dt_dtm, k = 6, control = list(seed = 1234))
+
+# Extract and display the top terms for each topic
+dt_topics <- tidy(dt_lda_model, matrix = "beta")
+
+dt_top_terms <- dt_topics %>%
+  group_by(topic) %>%
+  slice_max(beta, n = 6) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+dt_top_terms <- dt_top_terms %>%
+  mutate(
+    topic = case_when(
+      topic == 1 ~ "Economic Issues",
+      topic == 2 ~ "Immigration",
+      topic == 3 ~ "Healthcare",
+      topic == 4 ~ "National Security",
+      topic == 5 ~ "Climate Change",
+      topic == 6 ~ "Education"
+    )
+  )
+
+
+
+```
+
+```{r}
+
+# Visualize the top terms for each topic
+dt_top_terms %>% 
+ggplot(aes(x = reorder(term, beta), y = beta, fill = topic)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(
+    values = c("purple", "cyan", "red", "yellow", "blue", "green"),
+    name = "Topic"
+  ) +
+  labs(
+    title = "Common Narratives in Articles about Donald Trump",
+    subtitle = "Six probable topics. n=9,590",
+    y = "Beta",
+    x = "Terms",
+    caption = "by Nini Mtchedlishvili"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 12),
+    legend.position = "right",
+    axis.text.y = element_text(color = "black", size = 10),
+    axis.title.y = element_text(size = 12)
+  )
+
 
 ```
 
